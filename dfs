@@ -1,37 +1,90 @@
-#include<stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-int a[20][20],reach[20],n;
-void dfs(int v){
-     int i;
-     reach[v]=1;
-     for(i=1;i<=n;i++)
-         if(a[v][i]&&!reach[i]){
-            printf("\n%d->%d",v,i);
-            dfs(i);
-            }
- }
- int main(){
-    int i,j,count=0;
-    printf("\nEnter no of vertices : ");
-    scanf("%d",&n);
-    for(i=1;i<=n;i++)
-        for(j=1;j<=n;j++){
-        reach[i]=0;
-        a[i][j]=0;
+struct Node
+{
+    int vertexNumber;
+    struct Node *next;
+};
+
+struct Graph
+{
+    int numVertices;
+    int *visited;
+    struct Node **adjacencyLists;
+};
+
+struct Node *createNewNode(int v)
+{
+    struct Node *newNode = malloc(sizeof(struct Node));
+    newNode->vertexNumber = v;
+    newNode->next = NULL;
+    return newNode;
+}
+
+void addEdgeToGraph(struct Graph *graph, int source, int destination)
+{
+    struct Node *newNode = createNewNode(destination);
+    newNode->next = graph->adjacencyLists[source];
+    graph->adjacencyLists[source] = newNode;
+    newNode = createNewNode(source);
+    newNode->next = graph->adjacencyLists[destination];
+    graph->adjacencyLists[destination] = newNode;
+}
+
+struct Graph *createNewGraph(int vertices)
+{
+    int i;
+    struct Graph *graph = malloc(sizeof(struct Graph));
+    graph->numVertices = vertices;
+    graph->adjacencyLists = malloc(vertices * sizeof(struct Node *));
+    graph->visited = malloc(vertices * sizeof(int));
+    for (i = 0; i < vertices; i++)
+    {
+        graph->adjacencyLists[i] = NULL;
+        graph->visited[i] = 0;
+    }
+
+    return graph;
+}
+
+void performDFS(struct Graph *graph, int vertexNumber)
+{
+    struct Node *adjList = graph->adjacencyLists[vertexNumber];
+    struct Node *temp = adjList;
+    graph->visited[vertexNumber] = 1;
+    printf("%d ", vertexNumber);
+    while (temp != NULL)
+    {
+        int connectedVertex = temp->vertexNumber;
+        if (graph->visited[connectedVertex] == 0)
+        {
+            performDFS(graph, connectedVertex);
         }
+        temp = temp->next;
+    }
+}
 
-    printf("\nEnter adjacency matrix : \n");
-    for(i=1;i<=n;i++)
-      for(j=1;j<=n;j++)
-        scanf("%d",&a[i][j]);
-
-    dfs(1);
-    for(i=1;i<=n;i++)
-       if(reach[i])
-         count++;
-    if(count==n)
-       printf("\nGraph is connected.");
-    else
-       printf("\nGraph is disconnected.");
-    return(0);
-  }
+int main()
+{
+    int numVertices, numEdges, i;
+    int source, destination;
+    int startingVertex;
+    printf("Enter the number of vertices and edges in the graph: ");
+    scanf("%d%d", &numVertices, &numEdges);
+    struct Graph *graph = createNewGraph(numVertices);
+    printf("Add %d edges to the graph (vertex numbering should be from 0 to %d)\n", numEdges, numVertices - 1);
+    for (i = 0; i < numEdges; i++)
+    {
+        scanf("%d%d", &source, &destination);
+        addEdgeToGraph(graph, source, destination);
+    }
+    printf("Enter the starting vertex for DFS traversal: ");
+    scanf("%d", &startingVertex);
+    if (startingVertex < numVertices)
+    {
+        printf("DFS Traversal: ");
+        performDFS(graph, startingVertex);
+    }
+    return 0;
+}
